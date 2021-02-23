@@ -10,7 +10,7 @@ export default class Bot {
 	}
 
 	private makeUnsubCommand(e: Database["price_alert"][0]) {
-		return `To unsubscribe: /unsub_${e.id}`;
+		return `To unsubscribe:\n/unsub_${e.id}`;
 	}
 
 	private subscribe(product_id: string) {
@@ -23,7 +23,7 @@ export default class Bot {
 				const lastPrice = this.lastPrices[product_id];
 				if(lastPrice >= e.target_price && e.target_price >= price
 					|| lastPrice <= e.target_price && e.target_price <= price) {
-					telegram.sendMessage(e.chat_id, `Price for ${product_id} just passed from ${lastPrice} to ${price}.\n\n${this.makeUnsubCommand(e)}`);
+					telegram.sendMessage(e.chat_id, `Price for ${product_id} has just passed from ${lastPrice} to ${price}.\n\n${this.makeUnsubCommand(e)}`);
 				}
 			}
 			this.lastPrices[product_id] = price;
@@ -48,6 +48,15 @@ export default class Bot {
 			}));
 			this.subscribe(product_id);
 			telegram.sendMessage(tgBody.message.chat.id, `OK.\n${this.makeUnsubCommand(entry)}`);
+		} else if(command.startsWith("/list")) {
+			telegram.sendMessage(
+				tgBody.message.chat.id
+				, `Your subscriptions:\n\n${db.read()
+					.price_alert
+					.filter(x => x.chat_id === tgBody.message.chat.id)
+					.map(x => `Subscription for ${x.product_id} target ${x.target_price}:\n${this.makeUnsubCommand(x)}`)
+					.join("\n\n")
+				}`)
 		}
 	}
 
