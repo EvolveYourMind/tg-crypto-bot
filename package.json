@@ -1,0 +1,21 @@
+{
+  "name": "bot",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "author": "Desislav Ivanov <udie4we@abv.bg>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@types/express": "^4.17.11",
+    "@types/node": "^14.14.31",
+    "@types/node-fetch": "^2.5.8",
+    "@types/ws": "^7.4.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "ngrok": "^3.4.0",
+    "node-fetch": "^2.6.1",
+    "ws": "^7.4.3"
+  }
+}
