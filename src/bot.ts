@@ -32,7 +32,7 @@ export default class Bot {
 
 	public handleCommand(command: string, tgBody: TGBody) {
 		if(command.startsWith("/unsub")) {
-			const [_, product_id, id] = command.split("_");
+			const [_, id] = command.split("_");
 			db.update(x => ({
 				...x
 				, price_alert: x.price_alert.filter(y => y.id !== id)
