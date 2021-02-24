@@ -9,7 +9,7 @@ const bot = new Bot();
 app.post("/", (req, res) => {
 	res.send("ok");
 	const body: TGBody = req.body;
-	if(body.message.text) {
+	if(body.message && body.message.text) {
 		bot.handleCommand(body.message.text, body);
 	}
 });

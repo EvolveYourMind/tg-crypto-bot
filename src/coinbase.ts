@@ -28,7 +28,10 @@ export default class Coinbase {
 		this.initializing = new Promise(r => resolveInitializing = r);
 		this.ws.on("open", () => {
 			resolveInitializing({});
-			console.log("Connection with coinbase enstablished successfully")
+			console.log("Connection with coinbase enstablished successfully");
+		});
+		this.ws.on("close", () => {
+			console.log("Coinbase websocket got closed");
 		});
 		this.priceSubs = new Map();
 		this.listen();
@@ -36,8 +39,13 @@ export default class Coinbase {
 
 	private listen() {
 		const parent = this;
+		let lastLog = Date.now();
 		this.ws.on("message", (data) => {
 			const parsed = JSON.parse(data.toString());
+			if(Date.now() > lastLog + 30000) {
+				console.log("Got coinbase message.", parsed);
+				lastLog = Date.now();
+			}
 			if("product_id" in parsed) {
 				parent.priceSubs.get(parsed.product_id)?.(parseFloat(parsed.price));
 			}
