@@ -16,7 +16,7 @@ app.post("/", (req, res) => {
 
 async function main() {
 	try {
-		const tunnelUrl = await ngrok.connect({ authtoken: config.NGROK_AUTH_TOKEN, addr: config.PORT });
+		const tunnelUrl = config.WEBHOOK_URL ?? await ngrok.connect({ authtoken: config.NGROK_AUTH_TOKEN, addr: config.PORT });
 		await setWebhook(tunnelUrl);
 		console.log("HTTPS Tunnel: ", tunnelUrl);
 	} catch(err) {

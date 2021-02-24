@@ -4,6 +4,7 @@ const config = {
 	, COINBASE_SECRET: process.env.COINBASE_SECRET
 	, TG_BOT_KEY: process.env.TG_BOT_KEY
 	, PORT: process.env.PORT || 80
+	, WEBHOOK_URL: process.env.WEBHOOK_URL || null
 	, NGROK_AUTH_TOKEN: process.env.NGROK_AUTH_TOKEN
 }
 const undef = Object.entries(config).filter(([_, v]) => v === undefined);
