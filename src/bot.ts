@@ -67,7 +67,7 @@ export default class Bot {
 				)
 				).catch(console.error);
 		} else if(command.startsWith("/ping")) {
-			telegram.sendMessage(tgBody.message.chat.id, "Pong 🏓");
+			telegram.sendMessage(tgBody.message.chat.id, encodeURI("Pong 🏓"));
 		}
 	}
 
