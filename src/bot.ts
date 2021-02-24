@@ -17,26 +17,27 @@ export default class Bot {
 		Coinbase.instance.subscribePrice(product_id, (price) => this.onPrice(product_id, price));
 	}
 
-	private onPrice(product_id: string, price: number) {
-		db.read().price_alert.forEach(e => {
-			if(product_id in this.lastPrices) {
-				const lastPrice = this.lastPrices[product_id];
-				if(lastPrice >= e.target_price && e.target_price >= price
-					|| lastPrice <= e.target_price && e.target_price <= price) {
-					telegram.sendMessage(e.chat_id, `Price for ${product_id} has just passed from ${lastPrice} to ${price}.\n\n${this.makeUnsubCommand(e)}`);
-				}
-			}
-			this.lastPrices[product_id] = price;
-		});
+	private onPrice(product_id: string, currentPrice: number) {
+		const lastPrice = this.lastPrices[product_id];
+		if(lastPrice !== undefined && lastPrice !== null) {
+			db.read().price_alert
+				.filter(e => (lastPrice > e.target_price && e.target_price >= currentPrice)
+					|| (lastPrice < e.target_price && e.target_price <= currentPrice))
+				.forEach(e => {
+					telegram.sendMessage(e.chat_id, `Price for ${product_id} has just passed from ${lastPrice} to ${currentPrice}.\n\n${this.makeUnsubCommand(e)}`);
+				});
+		}
+		this.lastPrices[product_id] = currentPrice;
 	}
 
 	public handleCommand(command: string, tgBody: TGBody) {
 		if(command.startsWith("/unsub")) {
 			const [_, id] = command.split("_");
-			db.update(x => ({
-				...x
-				, price_alert: x.price_alert.filter(y => y.id !== id)
-			}));
+			if(id === "all") {
+				db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.chat_id !== tgBody.message.chat.id) }))
+			} else {
+				db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.id !== id) }));
+			}
 			telegram.sendMessage(tgBody.message.chat.id, "OK.");
 		} else if(command.startsWith("/target")) {
 			const [_, product_id, target] = command.split(" ");
@@ -49,14 +50,18 @@ export default class Bot {
 			this.subscribe(product_id);
 			telegram.sendMessage(tgBody.message.chat.id, `OK.\n${this.makeUnsubCommand(entry)}`);
 		} else if(command.startsWith("/list")) {
-			telegram.sendMessage(
-				tgBody.message.chat.id
-				, `Your subscriptions:\n\n${db.read()
-					.price_alert
-					.filter(x => x.chat_id === tgBody.message.chat.id)
-					.map(x => `Subscription for ${x.product_id} target ${x.target_price}:\n${this.makeUnsubCommand(x)}`)
-					.join("\n\n")
-				}`)
+			if(db.read().price_alert.filter(x => x.chat_id === tgBody.message.chat.id).length === 0) {
+				telegram.sendMessage(tgBody.message.chat.id, "No active subscriptions");
+			} else {
+				telegram.sendMessage(
+					tgBody.message.chat.id
+					, `Your subscriptions:\n\n${db.read()
+						.price_alert
+						.filter(x => x.chat_id === tgBody.message.chat.id)
+						.map(x => `Subscription for ${x.product_id} target ${x.target_price}:\n${this.makeUnsubCommand(x)}`)
+						.join("\n\n")
+					}\n\nTo unsubscribe all: /unsub_all`)
+			}
 		} else if(command.startsWith("/ticker")) {
 			const [_, product_id] = command.split(" ");
 			Coinbase.instance.ticker(product_id)
