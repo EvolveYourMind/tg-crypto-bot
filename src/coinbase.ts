@@ -62,6 +62,15 @@ export default class Coinbase {
 	}> {
 		return get(`/products/${product_id}/ticker`).then(res => res.json());
 	}
+	public trades(product_id: string): Promise<{
+    time: string,
+    trade_id: number,
+    price: string,
+    size: string,
+    side: "buy" | "sell"
+	}[]> {
+		return get(`/products/${product_id}/trades`).then(res => res.json());
+	}
 }
 
 function get(endpoint: string) {

@@ -73,6 +73,27 @@ export default class Bot {
 				).catch(console.error);
 		} else if(command.startsWith("/ping")) {
 			telegram.sendMessage(tgBody.message.chat.id, encodeURI("Pong 🏓"));
+		} else if(command.startsWith("/chart")) {
+			const [_, product_id] = command.split(" ");
+			Coinbase.instance.trades(product_id)
+				.then(res => telegram.sendPhoto(tgBody.message.chat.id, "here you are", `https://quickchart.io/chart?c=${encodeURI(JSON.stringify({
+					type: 'line',
+					data: {
+						labels: res.map((__, i) => i),
+						datasets: [{ label: 'trades', data: res.map(x => parseFloat(x.price)), fill: false, borderColor: 'black' }]
+					},
+					options: {
+						scales: {
+							yAxes: [{
+								ticks: {
+									beginAtZero: false
+								}
+							}]
+						}
+					}
+				}))}`
+				)
+				);
 		}
 	}
 
