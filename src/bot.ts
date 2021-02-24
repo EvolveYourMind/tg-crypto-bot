@@ -57,6 +57,15 @@ export default class Bot {
 					.map(x => `Subscription for ${x.product_id} target ${x.target_price}:\n${this.makeUnsubCommand(x)}`)
 					.join("\n\n")
 				}`)
+		} else if(command.startsWith("/ticker")) {
+			const [_, product_id] = command.split(" ");
+			Coinbase.instance.ticker(product_id)
+				.then(res => telegram.sendMessage(
+					tgBody.message.chat.id
+					, `Last trade:\n${(["price", "size", "ask", "bid"] as (keyof typeof res)[]).map(k => `${k}: ${res[k]}`).join("\n")
+					}`
+				)
+				).catch(console.error);
 		}
 	}
 
