@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node dist/main.js",
     "build": "tsc",
-    "postinstall": "npm run build"
+    "postinstall": "yarn build"
   },
   "dependencies": {
     "@types/express": "^4.17.11",
