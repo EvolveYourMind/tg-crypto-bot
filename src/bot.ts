@@ -1,3 +1,4 @@
+import moment from "moment";
 import Coinbase from "./coinbase";
 import db, { Database } from "./db";
 import telegram from "./telegram";
@@ -76,23 +77,35 @@ export default class Bot {
 		} else if(command.startsWith("/chart")) {
 			const [_, product_id] = command.split(" ");
 			Coinbase.instance.trades(product_id)
-				.then(res => telegram.sendPhoto(tgBody.message.chat.id, "here you are", `https://quickchart.io/chart?c=${encodeURI(JSON.stringify({
-					type: 'line',
-					data: {
-						labels: res.map((__, i) => i),
-						datasets: [{ label: 'trades', data: res.map(x => parseFloat(x.price)), fill: false, borderColor: 'black' }]
-					},
-					options: {
-						scales: {
-							yAxes: [{
-								ticks: {
-									beginAtZero: false
+				.then(res => {
+					res.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+					telegram.sendPhoto(
+						tgBody.message.chat.id
+						, [
+							product_id
+							, `First: ${moment(res.slice(-1)[0].time).format("LT")}`
+							, `Last: ${moment(res[0].time).format("LT")}`
+							, `Low: ${res.map(x => parseFloat(x.price)).reduce((a, v) => a < v ? a : v)}`
+							, `High: ${res.map(x => parseFloat(x.price)).reduce((a, v) => a < v ? v : a)}`
+						].join("\n")
+						, `https://quickchart.io/chart?c=${encodeURI(JSON.stringify({
+							type: 'line',
+							data: {
+								labels: res.map((__, i) => i),
+								datasets: [{ label: 'trades', data: res.map(x => parseFloat(x.price)), fill: false, borderColor: 'black' }]
+							},
+							options: {
+								scales: {
+									yAxes: [{
+										ticks: {
+											beginAtZero: false
+										}
+									}]
 								}
-							}]
-						}
-					}
-				}))}`
-				)
+							}
+						}))}`
+					)
+				}
 				);
 		}
 	}
