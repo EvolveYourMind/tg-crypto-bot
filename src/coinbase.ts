@@ -63,13 +63,34 @@ export default class Coinbase {
 		return get(`/products/${product_id}/ticker`).then(res => res.json());
 	}
 	public trades(product_id: string): Promise<{
-    time: string,
-    trade_id: number,
-    price: string,
-    size: string,
-    side: "buy" | "sell"
+		time: string,
+		trade_id: number,
+		price: string,
+		size: string,
+		side: "buy" | "sell"
 	}[]> {
 		return get(`/products/${product_id}/trades`).then(res => res.json());
+	}
+	public candles(opts: {
+		product_id: string
+		// start	Start time in ISO 8601
+		start: string
+		// end	End time in ISO 8601
+		end: string
+		// granularity	Desired timeslice in seconds
+		granularity: 60 | 300 | 900 | 3600 | 21600 | 86400
+	}): Promise<{ time: number, low: number, high: number, open: number, close: number, volume: number }[]> {
+		return get(`/products/${opts.product_id}/candles?start=${opts.start}&end=${opts.end}&granularity=${opts.granularity}`)
+			.then(res => res.json())
+			.then(data => data.map((x: [number, number, number, number, number, number]) => ({
+				time: x[0]
+				, low: x[1]
+				, high: x[2]
+				, open: x[3]
+				, close: x[4]
+				, volume: x[5]
+			}))
+			);
 	}
 }
 
