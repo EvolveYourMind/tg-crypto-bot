@@ -25,8 +25,7 @@ app.get("/candles/:id", (req, res) => {
 	})
 		.then(async data => {
 			data.sort((a, b) => a.time - b.time);
-			const chartInfo = data.map(x => ([moment.unix(x.time).format("LT"), x.low, x.open, x.close, x.high]
-			));
+			const chartInfo = data.map(x => ([moment.unix(x.time).format("L LT"), x.low, x.open, x.close, x.high]));
 			res.type('html').send(`
 				<html>
 					<head>
