@@ -114,11 +114,11 @@ export default class Bot {
 			const hours = hrs || 0.5;
 			const granularity = gran || 60
 			telegram.sendMessage(tgBody.message.chat.id, "Make a wish");
-			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}`);
+			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`);
 			telegram.sendPhoto(
 				tgBody.message.chat.id
 				, product_id
-				, `https://api.apiflash.com/v1/urltoimage?access_key=${config.API_FLASH_KEY}&url=${url}&no_cache=${Date.now()}`
+				, `https://api.apiflash.com/v1/urltoimage?access_key=${config.API_FLASH_KEY}&url=${url}`
 			);
 		}
 	}
