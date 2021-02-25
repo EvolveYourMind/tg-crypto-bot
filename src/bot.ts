@@ -110,12 +110,15 @@ export default class Bot {
 				}
 				);
 		} else if(command.startsWith("/candles")) {
-			const [_, product_id] = command.split(" ");
+			const [_, product_id, hrs, gran] = command.split(" ");
+			const hours = hrs || 0.5;
+			const granularity = gran || 60
 			telegram.sendMessage(tgBody.message.chat.id, "Make a wish");
+			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}`);
 			telegram.sendPhoto(
 				tgBody.message.chat.id
 				, product_id
-				, `https://api.apiflash.com/v1/urltoimage?access_key=${config.API_FLASH_KEY}&url=${encodeURI(getHostUrl() + "/candles/" + product_id)}`
+				, `https://api.apiflash.com/v1/urltoimage?access_key=${config.API_FLASH_KEY}&url=${url}`
 			);
 		}
 	}

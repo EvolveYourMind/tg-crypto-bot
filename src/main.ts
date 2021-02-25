@@ -19,9 +19,9 @@ app.post("/", (req, res) => {
 app.get("/candles/:id", (req, res) => {
 	Coinbase.instance.candles({
 		product_id: req.params.id
-		, start: moment().subtract(0.5, "hours").toISOString()
+		, start: moment().subtract(parseFloat(req.query.hours as string), "hours").toISOString()
 		, end: moment().toISOString()
-		, granularity: 60
+		, granularity: parseInt(req.query.granularity as any) as any
 	})
 		.then(async data => {
 			data.sort((a, b) => a.time - b.time);
