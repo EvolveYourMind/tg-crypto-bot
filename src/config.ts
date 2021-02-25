@@ -7,6 +7,7 @@ const config = {
 	, PORT: process.env.PORT || 80
 	, WEBHOOK_URL: process.env.WEBHOOK_URL || null
 	, NGROK_AUTH_TOKEN: process.env.NGROK_AUTH_TOKEN!
+	, API_FLASH_KEY: process.env.API_FLASH_KEY
 } 
 const undef = Object.entries(config).filter(([_, v]) => v === undefined);
 if(undef.length > 0) {

@@ -2,8 +2,8 @@ import moment from "moment";
 import Coinbase from "./coinbase";
 import db, { Database } from "./db";
 import telegram from "./telegram";
-import puppeteer from "puppeteer";
-import { Stream } from "form-data";
+import { getHostUrl } from "./express";
+import config from "./config";
 
 export default class Bot {
 	private lastPrices: Record<string, number>;
@@ -112,47 +112,11 @@ export default class Bot {
 		} else if(command.startsWith("/candles")) {
 			const [_, product_id] = command.split(" ");
 			telegram.sendMessage(tgBody.message.chat.id, "Make a wish");
-			Coinbase.instance.candles({
-				product_id
-				, start: moment().subtract(0.5, "hours").toISOString()
-				, end: moment().toISOString()
-				, granularity: 60
-			})
-				.then(async res => {
-					res.sort((a, b) => a.time - b.time);
-					const chartInfo = res.map(x => ([
-						moment.unix(x.time).format("LT")
-						, x.low
-						, x.open
-						, x.close
-						, x.high
-					]
-					));
-					const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-					const page = await browser.newPage();
-					await page.setContent(`
-						<html>
-							<head>
-								<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-								<script type="text/javascript">
-									google.charts.load('current', {'packages':['corechart']});
-									google.charts.setOnLoadCallback(drawChart);
-									function drawChart() {
-										var data = google.visualization.arrayToDataTable(JSON.parse(\`${JSON.stringify(chartInfo)}\`), true);
-										var options = {	legend:'none'	};
-										var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
-										chart.draw(data, options);
-									}
-								</script>
-							</head>
-							<body style="width: 100vw; height: 100vh; padding: 0px">
-								<div id="chart_div" style="width: 100vw; height: 100vh;"></div>
-							</body>
-						</html>
-						`);
-					telegram.sendPhoto(tgBody.message.chat.id, product_id, await page.screenshot() as Buffer);
-				}
-				);
+			telegram.sendPhoto(
+				tgBody.message.chat.id
+				, product_id
+				, `https://api.apiflash.com/v1/urltoimage?access_key=${config.API_FLASH_KEY}&url=${encodeURI(getHostUrl() + "/candles/" + product_id)}`
+			);
 		}
 	}
 
