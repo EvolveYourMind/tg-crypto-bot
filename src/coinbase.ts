@@ -14,26 +14,34 @@ export default class Coinbase {
 		await this.initializing;
 		if(!this.priceSubs.has(product_id)) {
 			this.priceSubs.set(product_id, onPrice);
-			this.ws.send(JSON.stringify({
-				"type": "subscribe"
-				, "product_ids": [product_id]
-				, "channels": ["ticker"]
-			}));
+			this.subscribe(product_id);
 		}
+	}
+	private subscribe(product_id: string) {
+		this.ws.send(JSON.stringify({ "type": "subscribe", "product_ids": [product_id], "channels": ["ticker"] }));
 	}
 
 	private constructor() {
 		this.ws = new WebSocket("wss://ws-feed.pro.coinbase.com");
+		this.initializing = new Promise(resolve => { });
+		this.priceSubs = new Map();
+		this.init();
+	}
+
+	private init() {
 		let resolveInitializing: (v: any) => void;
 		this.initializing = new Promise(r => resolveInitializing = r);
+		this.ws.close();
+		this.ws = new WebSocket("wss://ws-feed.pro.coinbase.com");
 		this.ws.on("open", () => {
 			resolveInitializing({});
 			console.log("Connection with coinbase enstablished successfully");
 		});
 		this.ws.on("close", () => {
 			console.log("Coinbase websocket got closed");
+			this.init();
+			[...this.priceSubs.keys()].forEach(k => this.subscribe(k));
 		});
-		this.priceSubs = new Map();
 		this.listen();
 	}
 
