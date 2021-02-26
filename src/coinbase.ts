@@ -10,14 +10,14 @@ export default class Coinbase {
 	private priceSubs: Map<string, (price: number) => void>;
 	private initializing: Promise<any>;
 
-	public async subscribePrice(product_id: string, onPrice: (price: number) => void) {
-		await this.initializing;
+	public subscribePrice(product_id: string, onPrice: (price: number) => void) {
 		if(!this.priceSubs.has(product_id)) {
 			this.priceSubs.set(product_id, onPrice);
 			this.subscribe(product_id);
 		}
 	}
-	private subscribe(product_id: string) {
+	private async subscribe(product_id: string) {
+		await this.initializing;
 		this.ws.send(JSON.stringify({ "type": "subscribe", "product_ids": [product_id], "channels": ["ticker"] }));
 	}
 
