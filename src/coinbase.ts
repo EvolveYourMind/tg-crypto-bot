@@ -31,7 +31,6 @@ export default class Coinbase {
 	private init() {
 		let resolveInitializing: (v: any) => void;
 		this.initializing = new Promise(r => resolveInitializing = r);
-		this.ws.close();
 		this.ws = new WebSocket("wss://ws-feed.pro.coinbase.com");
 		this.ws.on("open", () => {
 			resolveInitializing({});
