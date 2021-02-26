@@ -18,6 +18,7 @@ export default class Coinbase {
 	}
 	private async subscribe(product_id: string) {
 		await this.initializing;
+		console.log("Subscribing for", product_id);
 		this.ws.send(JSON.stringify({ "type": "subscribe", "product_ids": [product_id], "channels": ["ticker"] }));
 	}
 

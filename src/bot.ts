@@ -113,7 +113,6 @@ export default class Bot {
 			const [_, product_id, hrs, gran] = command.split(" ");
 			const hours = hrs || 0.5;
 			const granularity = gran || 60
-			telegram.sendMessage(tgBody.message.chat.id, "Make a wish");
 			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`);
 			telegram.sendPhoto(
 				tgBody.message.chat.id
