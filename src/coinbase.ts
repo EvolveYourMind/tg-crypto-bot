@@ -11,9 +11,10 @@ export default class Coinbase {
 	private initializing: Promise<any>;
 
 	public subscribePrice(product_id: string, onPrice: (price: number) => void) {
-		if(!this.priceSubs.has(product_id)) {
-			this.priceSubs.set(product_id, onPrice);
-			this.subscribe(product_id);
+		const uppcase = product_id.toUpperCase();
+		if(!this.priceSubs.has(uppcase)) {
+			this.priceSubs.set(uppcase, onPrice);
+			this.subscribe(uppcase);
 		}
 	}
 	private async subscribe(product_id: string) {
