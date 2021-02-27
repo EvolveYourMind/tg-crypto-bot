@@ -117,7 +117,7 @@ export default class Bot {
 			telegram.sendPhoto(
 				tgBody.message.chat.id
 				, product_id
-				, `https://api.apiflash.com/v1/urltoimage?access_key=${config.API_FLASH_KEY}&url=${url}`
+				, `${config.SCREENSHOT_ENDPOINT}?url=${url}`
 			);
 		}
 	}
