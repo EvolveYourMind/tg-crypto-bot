@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import FormData, { Stream } from "form-data";
 
 export function sendMessage(chat_id: string | number, text: string) {
-	return fetch(`https://api.telegram.org/bot${config.TG_BOT_KEY}/sendMessage?chat_id=${chat_id}&text=${text}`);
+	return fetch(`https://api.telegram.org/bot${config.TG_BOT_KEY}/sendMessage?chat_id=${chat_id}&text=${encodeURIComponent(text)}`);
 }
 
 export function sendPhoto(chat_id: string | number, text: string, photoUrl: string | Stream | Buffer) {

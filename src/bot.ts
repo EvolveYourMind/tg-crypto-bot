@@ -4,6 +4,7 @@ import db, { Database } from "./db";
 import telegram from "./telegram";
 import { getHostUrl } from "./express";
 import config from "./config";
+import crypto from "crypto";
 
 export default class Bot {
 	private lastPrices: Record<string, number>;
@@ -13,7 +14,7 @@ export default class Bot {
 	}
 
 	private makeUnsubCommand(e: Database["price_alert"][0]) {
-		return `To unsubscribe:\n/unsub_${e.id}`;
+		return `(/unsub_${e.id})`;
 	}
 
 	private subscribe(product_id: string) {
@@ -27,7 +28,7 @@ export default class Bot {
 				.filter(e => (lastPrice > e.target_price && e.target_price >= currentPrice)
 					|| (lastPrice < e.target_price && e.target_price <= currentPrice))
 				.forEach(e => {
-					telegram.sendMessage(e.chat_id, `Price for ${product_id} has just passed from ${lastPrice} to ${currentPrice}.\n\n${this.makeUnsubCommand(e)}`);
+					telegram.sendMessage(e.chat_id, `${product_id}: ${lastPrice} → ${currentPrice}\n${this.makeUnsubCommand(e)}`);
 				});
 		}
 		this.lastPrices[product_id] = currentPrice;
@@ -44,14 +45,14 @@ export default class Bot {
 			telegram.sendMessage(tgBody.message.chat.id, "OK.");
 		} else if(command.startsWith("/target")) {
 			const [_, product_id, target] = command.split(" ");
-			const id = Date.now().toString();
+			const id = crypto.randomBytes(4).toString("hex");
 			const entry = { id: id, product_id, chat_id: tgBody.message.chat.id, target_price: parseFloat(target) };
 			db.update(x => ({
 				...x
 				, price_alert: [...x.price_alert, entry]
 			}));
 			this.subscribe(product_id);
-			telegram.sendMessage(tgBody.message.chat.id, `OK.\n${this.makeUnsubCommand(entry)}`);
+			telegram.sendMessage(tgBody.message.chat.id, `OK. ${this.makeUnsubCommand(entry)}`);
 		} else if(command.startsWith("/list")) {
 			if(db.read().price_alert.filter(x => x.chat_id === tgBody.message.chat.id).length === 0) {
 				telegram.sendMessage(tgBody.message.chat.id, "No active subscriptions");
@@ -75,7 +76,7 @@ export default class Bot {
 				)
 				).catch(console.error);
 		} else if(command.startsWith("/ping")) {
-			telegram.sendMessage(tgBody.message.chat.id, encodeURI("Pong 🏓"));
+			telegram.sendMessage(tgBody.message.chat.id, "Pong 🏓");
 		} else if(command.startsWith("/chart")) {
 			const [_, product_id] = command.split(" ");
 			Coinbase.instance.trades(product_id)
@@ -90,7 +91,7 @@ export default class Bot {
 							, `Low: ${res.map(x => parseFloat(x.price)).reduce((a, v) => a < v ? a : v)}`
 							, `High: ${res.map(x => parseFloat(x.price)).reduce((a, v) => a < v ? v : a)}`
 						].join("\n")
-						, `https://quickchart.io/chart?c=${encodeURI(JSON.stringify({
+						, `https://quickchart.io/chart?c=${JSON.stringify({
 							type: 'line',
 							data: {
 								labels: res.map((__, i) => i),
@@ -105,7 +106,7 @@ export default class Bot {
 									}]
 								}
 							}
-						}))}`
+						})}`
 					)
 				}
 				);
@@ -113,7 +114,7 @@ export default class Bot {
 			const [_, product_id, hrs, gran] = command.split(" ");
 			const hours = hrs || 0.5;
 			const granularity = gran || 60
-			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`);
+			const url = `${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`;
 			telegram.sendPhoto(
 				tgBody.message.chat.id
 				, product_id
