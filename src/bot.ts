@@ -114,7 +114,7 @@ export default class Bot {
 			const [_, product_id, hrs, gran] = command.split(" ");
 			const hours = hrs || 0.5;
 			const granularity = gran || 60
-			const url = `${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`;
+			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`);
 			telegram.sendPhoto(
 				tgBody.message.chat.id
 				, product_id
