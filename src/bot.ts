@@ -28,7 +28,7 @@ export default class Bot {
 				.filter(e => (lastPrice > e.target_price && e.target_price >= currentPrice)
 					|| (lastPrice < e.target_price && e.target_price <= currentPrice))
 				.forEach(e => {
-					telegram.sendMessage(e.chat_id, `${product_id}: ${lastPrice} → ${currentPrice}\n${this.makeUnsubCommand(e)}`);
+					telegram.sendMessage(e.chat_id, `${product_id.toUpperCase()}: ${lastPrice} → ${currentPrice} ${currentPrice > lastPrice ? "📈" : "📉"} \n${this.makeUnsubCommand(e)}`);
 				});
 		}
 		this.lastPrices[product_id] = currentPrice;
