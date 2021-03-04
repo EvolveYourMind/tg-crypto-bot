@@ -112,7 +112,7 @@ export default class Bot {
 				);
 		} else if(command.startsWith("/candles")) {
 			const [_, product_id, hrs, gran] = command.split(" ");
-			const hours = hrs || 0.5;
+			const hours = hrs || 2;
 			const granularity = gran || 60
 			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`);
 			telegram.sendPhoto(
