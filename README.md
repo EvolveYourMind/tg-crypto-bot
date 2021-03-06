@@ -39,7 +39,7 @@ Get a line chart of the prices of the last 100 trades:
 /chart btc-eur
 ```
 
-Get a candles chart of the market for the last 30 minutes with a granularity of 1 minute:
+Get a candles chart of the market for the last 2 hours with a granularity of 1 minute:
 ```
 /candles btc-eur
 ```
