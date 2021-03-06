@@ -21,16 +21,17 @@ export default class Bot {
 		Coinbase.instance.subscribePrice(product_id, (price) => this.onPrice(product_id, price));
 	}
 
-	private subscribeTarget(chat_id: number, product_id: string, target: number) {
+	private subscribeTarget(chat_id: number, product_id: string, target: number, parent_id?: string) {
 		const id = crypto.randomBytes(4).toString("hex");
-		const entry = { id: id, product_id, chat_id: chat_id, target_price: target };
+		const entry = { id: id, product_id, chat_id: chat_id, target_price: target, parent_id };
 		db.update(x => ({ ...x, price_alert: [...x.price_alert, entry] }));
 		this.subscribe(product_id);
 		return entry;
 	}
 
 	private unsubscribeTarget(id: string) {
-		db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.id !== id) }));
+		const found = db.read().price_alert.find(x => x.id === id);
+		db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.id !== id && y.parent_id !== found?.parent_id) }));
 	}
 
 	private unsubscribeTargetAll(chatId: number) {
@@ -47,8 +48,8 @@ export default class Bot {
 				.forEach(e => {
 					telegram.sendMessage(e.chat_id, `${product_id.toUpperCase()}: ${lastPrice} → ${currentPrice} ${currentPrice > lastPrice ? "📈" : "📉"} \n${this.makeUnsubCommand(e)}`);
 					this.unsubscribeTarget(e.id);
-					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 + 0.005));
-					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 - 0.005));
+					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 + 0.005), e.id);
+					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 - 0.005), e.id);
 				});
 		}
 		this.lastPrices[product_id] = currentPrice;

@@ -9,6 +9,7 @@ export type Database = {
 		product_id: string
 		target_price: number
 		chat_id: number
+		parent_id?: string
 	}[]
 }
 
