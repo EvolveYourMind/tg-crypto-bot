@@ -21,14 +21,34 @@ export default class Bot {
 		Coinbase.instance.subscribePrice(product_id, (price) => this.onPrice(product_id, price));
 	}
 
+	private subscribeTarget(chat_id: number, product_id: string, target: number) {
+		const id = crypto.randomBytes(4).toString("hex");
+		const entry = { id: id, product_id, chat_id: chat_id, target_price: target };
+		db.update(x => ({ ...x, price_alert: [...x.price_alert, entry] }));
+		this.subscribe(product_id);
+		return entry;
+	}
+
+	private unsubscribeTarget(id: string) {
+		db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.id !== id) }));
+	}
+
+	private unsubscribeTargetAll(chatId: number) {
+		db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.chat_id !== chatId) }))
+	}
+
 	private onPrice(product_id: string, currentPrice: number) {
 		const lastPrice = this.lastPrices[product_id];
 		if(lastPrice !== undefined && lastPrice !== null) {
-			db.read().price_alert
+			db.read()
+				.price_alert
 				.filter(e => (lastPrice > e.target_price && e.target_price >= currentPrice)
 					|| (lastPrice < e.target_price && e.target_price <= currentPrice))
 				.forEach(e => {
 					telegram.sendMessage(e.chat_id, `${product_id.toUpperCase()}: ${lastPrice} → ${currentPrice} ${currentPrice > lastPrice ? "📈" : "📉"} \n${this.makeUnsubCommand(e)}`);
+					this.unsubscribeTarget(e.id);
+					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 + 0.005));
+					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 - 0.005));
 				});
 		}
 		this.lastPrices[product_id] = currentPrice;
@@ -38,20 +58,14 @@ export default class Bot {
 		if(command.startsWith("/unsub")) {
 			const [_, id] = command.split("_");
 			if(id === "all") {
-				db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.chat_id !== tgBody.message.chat.id) }))
+				this.unsubscribeTargetAll(tgBody.message.chat.id);
 			} else {
-				db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.id !== id) }));
+				this.unsubscribeTarget(id);
 			}
 			telegram.sendMessage(tgBody.message.chat.id, "OK.");
 		} else if(command.startsWith("/target")) {
 			const [_, product_id, target] = command.split(" ");
-			const id = crypto.randomBytes(4).toString("hex");
-			const entry = { id: id, product_id, chat_id: tgBody.message.chat.id, target_price: parseFloat(target) };
-			db.update(x => ({
-				...x
-				, price_alert: [...x.price_alert, entry]
-			}));
-			this.subscribe(product_id);
+			const entry = this.subscribeTarget(tgBody.message.chat.id, product_id, parseFloat(target));
 			telegram.sendMessage(tgBody.message.chat.id, `OK. ${this.makeUnsubCommand(entry)}`);
 		} else if(command.startsWith("/list")) {
 			if(db.read().price_alert.filter(x => x.chat_id === tgBody.message.chat.id).length === 0) {
