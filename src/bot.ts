@@ -31,7 +31,7 @@ export default class Bot {
 
 	private unsubscribeTarget(id: string) {
 		const found = db.read().price_alert.find(x => x.id === id);
-		db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.id !== id && y.parent_id !== found?.parent_id) }));
+		db.update(x => ({ ...x, price_alert: x.price_alert.filter(y => y.id !== id && (y.parent_id === undefined || y.parent_id !== found?.parent_id)) }));
 	}
 
 	private unsubscribeTargetAll(chatId: number) {
