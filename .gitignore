@@ -4,3 +4,4 @@ node_modules
 dist
 *.pem
 db.json
+log_db.json

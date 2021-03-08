@@ -5,6 +5,7 @@ import config from "./config";
 import Bot from "./bot";
 import Coinbase from "./coinbase";
 import moment from "moment";
+import { SaveToLog } from "./logger";
 
 const bot = new Bot();
 
@@ -13,6 +14,7 @@ app.post("/", (req, res) => {
 	const body: TGBody = req.body;
 	if(body.message && body.message.text) {
 		bot.handleCommand(body.message.text, body);
+		SaveToLog(body);
 	}
 });
 
