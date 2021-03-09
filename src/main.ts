@@ -28,6 +28,8 @@ app.get("/candles/:id", (req, res) => {
 		.then(async data => {
 			data.sort((a, b) => a.time - b.time);
 			const chartInfo = data.map(x => ([moment.unix(x.time).format("L LT"), x.low, x.open, x.close, x.high]));
+			const High = data.reduce((a, v) => a.high > v.high ? a : v).high
+			const Low = data.reduce((a, v) => a.low < v.low ? a : v).low
 			res.type('html').send(`
 				<html>
 					<head>
@@ -43,7 +45,16 @@ app.get("/candles/:id", (req, res) => {
 							}
 						</script>
 					</head>
-					<body style="width: 100vw; height: 100vh; padding: 0px">
+					<body style="width: 100vw; height: 100vh; padding: 0px; position: relative; font-family: arial">
+						<div style="position: absolute; width: 100%; z-index: 2">
+							<h3 style="text-align: center; margin-top: 40px;">${req.params.id.toUpperCase()}</h3>
+							<table style="margin-left: auto; margin-right: auto">
+								<tr><td>High:</td><td>${High.toFixed(4)}</td></tr>
+								<tr><td>Low:</td><td>${Low.toFixed(4)}</td></tr>
+								<tr><td>High/Low:</td><td>${(High / Low -1).toFixed(4)}</td></tr>
+								<tr><td>High/Last:</td><td>${(High / data.slice(-1)[0].close -1).toFixed(4)}</td></tr>
+							</table>
+						</div>
 						<div id="chart_div" style="width: 100vw; height: 100vh;"></div>
 					</body>
 				</html>
