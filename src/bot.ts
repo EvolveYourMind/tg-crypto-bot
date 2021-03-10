@@ -9,7 +9,6 @@ import * as child_process from "child_process"
 import * as fs from "fs";
 const exec = util.promisify(child_process.exec);
 
-
 export default class Bot {
 	private lastPrices: Record<string, number>;
 	constructor() {
@@ -133,7 +132,7 @@ export default class Bot {
 			const [_, product_id, hrs, gran] = command.split(" ");
 			const hours = hrs || 2;
 			const granularity = gran || 60
-			const url = `http://127.0.0.1:${config.PORT}/candles/${product_id}?hours=${hours}&granularity=${granularity}`;
+			const url = `http://localhost:${config.PORT}/candles/${product_id}?hours=${hours}&granularity=${granularity}`;
 			this.screenshot(url)
 				.then(buf => telegram.sendPhoto(tgBody.message.chat.id, product_id, buf))
 				.then(res => res.json())
@@ -145,7 +144,7 @@ export default class Bot {
 	private async screenshot(url: string): Promise<fs.ReadStream> {
 		console.log(url);
 		const filepath = `/tmp/${Date.now()}.png`;
-		await exec(`chromium-browser --headless --disable-gpu --window-size=1600,900 --screenshot=${filepath} "${url}"`)
+		await exec(`chromium-browser --headless --no-sandbox --disable-gpu --window-size=1600,900 --screenshot="${filepath}" "${url}"`)
 			.catch(console.error);
 		return Promise.resolve(fs.createReadStream(filepath));
 	}
