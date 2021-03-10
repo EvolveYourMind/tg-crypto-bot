@@ -2,9 +2,13 @@ import moment from "moment";
 import Coinbase from "./coinbase";
 import db, { Database } from "./db";
 import telegram from "./telegram";
-import { getHostUrl } from "./express";
 import config from "./config";
 import crypto from "crypto";
+import util from 'util';
+import * as child_process from "child_process"
+import * as fs from "fs";
+const exec = util.promisify(child_process.exec);
+
 
 export default class Bot {
 	private lastPrices: Record<string, number>;
@@ -129,13 +133,20 @@ export default class Bot {
 			const [_, product_id, hrs, gran] = command.split(" ");
 			const hours = hrs || 2;
 			const granularity = gran || 60
-			const url = encodeURIComponent(`${getHostUrl()}/candles/${product_id}?hours=${hours}&granularity=${granularity}&no_cache=${Date.now()}`);
-			telegram.sendPhoto(
-				tgBody.message.chat.id
-				, product_id
-				, `${config.SCREENSHOT_ENDPOINT}?url=${url}`
-			);
+			const url = `http://127.0.0.1:${config.PORT}/candles/${product_id}?hours=${hours}&granularity=${granularity}`;
+			this.screenshot(url)
+				.then(buf => telegram.sendPhoto(tgBody.message.chat.id, product_id, buf))
+				.then(res => res.json())
+				.then(console.log)
+				.catch(console.error);
+
 		}
 	}
-
+	private async screenshot(url: string): Promise<fs.ReadStream> {
+		console.log(url);
+		const filepath = `/tmp/${Date.now()}.png`;
+		await exec(`chromium-browser --headless --disable-gpu --window-size=1600,900 --screenshot=${filepath} "${url}"`)
+			.catch(console.error);
+		return Promise.resolve(fs.createReadStream(filepath));
+	}
 }
