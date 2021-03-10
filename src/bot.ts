@@ -142,7 +142,7 @@ export default class Bot {
 	private async screenshot(url: string): Promise<fs.ReadStream> {
 		console.log(url);
 		const filepath = `.tmp/${Date.now()}.png`;
-		const p = child_process.exec("chromium-browser " + ["--headless", "--no-sandbox", "--disable-gpu", "--window-size=1600,900", `--screenshot=${filepath}`, `"${url}"`].join(" "));
+		const p = child_process.exec("chromium-browser " + ["--headless", "--hide-scrollbars", "--no-sandbox", "--disable-gpu", "--window-size=1600,900", `--screenshot=${filepath}`, `"${url}"`].join(" "));
 		return new Promise((resolve) => p.stdout?.on("end", () => {
 			// Optimistic resolve
 			resolve(fs.createReadStream(filepath))
