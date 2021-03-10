@@ -4,10 +4,8 @@ import db, { Database } from "./db";
 import telegram from "./telegram";
 import config from "./config";
 import crypto from "crypto";
-import util from 'util';
 import * as child_process from "child_process"
 import * as fs from "fs";
-const exec = util.promisify(child_process.exec);
 
 export default class Bot {
 	private lastPrices: Record<string, number>;
@@ -143,9 +141,11 @@ export default class Bot {
 	}
 	private async screenshot(url: string): Promise<fs.ReadStream> {
 		console.log(url);
-		const filepath = `/tmp/${Date.now()}.png`;
-		await exec(`chromium-browser --headless --no-sandbox --disable-gpu --window-size=1600,900 --screenshot="${filepath}" "${url}"`)
-			.catch(console.error);
-		return Promise.resolve(fs.createReadStream(filepath));
+		const filepath = `.tmp/${Date.now()}.png`;
+		const p = child_process.exec("chromium-browser " + ["--headless", "--no-sandbox", "--disable-gpu", "--window-size=1600,900", `--screenshot=${filepath}`, `"${url}"`].join(" "));
+		return new Promise((resolve) => p.stdout?.on("end", () => {
+			// Optimistic resolve
+			resolve(fs.createReadStream(filepath))
+		}));
 	}
 }
