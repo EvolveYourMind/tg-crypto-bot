@@ -27,7 +27,6 @@ app.get("/candles/:id", (req, res) => {
 	})
 		.then(async data => {
 			data.sort((a, b) => a.time - b.time);
-			const chartInfo = data.map(x => ([moment.unix(x.time).format("L LT"), x.low, x.open, x.close, x.high]));
 			const High = data.reduce((a, v) => a.high > v.high ? a : v).high
 			const Low = data.reduce((a, v) => a.low < v.low ? a : v).low
 			const Open = data[0].open;
@@ -36,29 +35,12 @@ app.get("/candles/:id", (req, res) => {
 			res.type('html').send(`
 				<html>
 					<head>
-						<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-						<script type="text/javascript">
-							google.charts.load('current', {'packages':['corechart']});
-							google.charts.setOnLoadCallback(drawChart);
-							function drawChart() {
-								var data = google.visualization.arrayToDataTable(JSON.parse(\`${JSON.stringify(chartInfo)}\`), true);
-								var options = {
-									legend:'none',
-									candlestick: {
-										risingColor: {stroke: '#4CAF50', fill: 'white'},
-										fallingColor: {stroke: '#F44336', fill: '#F44336'},
-									},
-									hAxis: { textPosition: 'none' },
-								};
-								var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
-								chart.draw(data, options);
-							}
-						</script>
+						<script type="text/javascript" src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 					</head>
-					<body style="width: 100vw; height: 100vh; padding: 0px; position: relative; font-family: arial">
-						<div style="position: absolute; width: 100%; z-index: 2">
+					<body style="width: 100vw; height: 100vh; margin: 0px; position: relative; font-family: arial">
+						<div style="position:absolute; z-index: 2; color:#fff; width: 100%">
 							<h3 style="text-align: center; margin-top: 40px;">${req.params.id.toUpperCase()}</h3>
-							<table style="margin-left: auto; margin-right: auto">
+							<table style="color: #fff; margin-left: auto; margin-right: auto">
 								<tr>
 									<td>High:</td><td>${High.toFixed(4)}</td>
 									<td>Close:</td><td>${Close.toFixed(4)}</td>
@@ -69,11 +51,11 @@ app.get("/candles/:id", (req, res) => {
 								</tr>
 								<tr>
 									<td>High/Close:</td>
-									<td style="color: ${High > Close ? "green" : "red"}">${(High / Close * 100 - 100).toFixed(4)}%</td>
+									<td style="color: ${High > Close ? "#68BA42" : "#D86A45"}">${(High / Close * 100 - 100).toFixed(4)}%</td>
 								</tr>
 								<tr>
 									<td>Close/Open:</td>
-									<td style="color: ${Close > Open ? "green" : "red"}">${(Close / Open * 100 - 100).toFixed(4)}%</td>
+									<td style="color: ${Close > Open ? "#68BA42" : "#D86A45"}">${(Close / Open * 100 - 100).toFixed(4)}%</td>
 								</tr>
 								<tr>
 									<td>Date</td>
@@ -81,8 +63,47 @@ app.get("/candles/:id", (req, res) => {
 								</tr>
 							</table>
 						</div>
-						<div id="chart_div" style="width: 100vw; height: 100vh;"></div>
+						<div id="chart_div"></div>
 					</body>
+					<script type="text/javascript">
+						var chart = LightweightCharts.createChart(document.getElementById("chart_div"), {
+							width: document.body.offsetWidth,
+							height: document.body.offsetHeight,
+							layout: {
+								backgroundColor: '#000000',
+								textColor: 'rgba(255, 255, 255, 0.9)',
+							},
+							grid: {
+								vertLines: {
+									color: 'rgba(197, 203, 206, 0.5)',
+								},
+								horzLines: {
+									color: 'rgba(197, 203, 206, 0.5)',
+								},
+							},
+							crosshair: {
+								mode: LightweightCharts.CrosshairMode.Normal,
+							},
+							rightPriceScale: {
+								borderColor: 'rgba(197, 203, 206, 0.8)',
+							},
+							timeScale: {
+								borderColor: 'rgba(197, 203, 206, 0.8)',
+								timeVisible: true,
+							},
+						});
+						
+						var candleSeries = chart.addCandlestickSeries({
+							upColor: '#68BA42',
+							downColor: 'red',
+							borderDownColor: 'red',
+							borderUpColor: '#68BA42',
+							wickDownColor: 'red',
+							wickUpColor: '#68BA42',
+						});
+						
+						candleSeries.setData(JSON.parse(\`${JSON.stringify(data)}\`));
+						</script>
 				</html>
 				`);
 		});
