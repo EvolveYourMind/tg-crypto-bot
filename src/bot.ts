@@ -78,9 +78,9 @@ export default class Bot {
 					, `Your subscriptions:\n\n${db.read()
 						.price_alert
 						.filter(x => x.chat_id === tgBody.message.chat.id)
-						.map(x => `Subscription for ${x.product_id} target ${x.target_price}:\n${this.makeUnsubCommand(x)}`)
-						.join("\n\n")
-					}\n\nTo unsubscribe all: /unsub_all`)
+						.map(x => `${x.product_id}: ${x.target_price.toFixed(4)} ${this.makeUnsubCommand(x)}`)
+						.join("\n")
+					}\nUnsubscribe all: /unsub_all`)
 			}
 		} else if(command.startsWith("/ticker")) {
 			const [_, product_id] = command.split(" ");
@@ -93,39 +93,6 @@ export default class Bot {
 				).catch(console.error);
 		} else if(command.startsWith("/ping")) {
 			telegram.sendMessage(tgBody.message.chat.id, "Pong 🏓");
-		} else if(command.startsWith("/chart")) {
-			const [_, product_id] = command.split(" ");
-			Coinbase.instance.trades(product_id)
-				.then(res => {
-					res.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-					telegram.sendPhoto(
-						tgBody.message.chat.id
-						, [
-							product_id
-							, `First: ${moment(res.slice(-1)[0].time).format("LT")}`
-							, `Last: ${moment(res[0].time).format("LT")}`
-							, `Low: ${res.map(x => parseFloat(x.price)).reduce((a, v) => a < v ? a : v)}`
-							, `High: ${res.map(x => parseFloat(x.price)).reduce((a, v) => a < v ? v : a)}`
-						].join("\n")
-						, `https://quickchart.io/chart?c=${JSON.stringify({
-							type: 'line',
-							data: {
-								labels: res.map((__, i) => i),
-								datasets: [{ label: 'trades', data: res.map(x => parseFloat(x.price)), fill: false, borderColor: 'black' }]
-							},
-							options: {
-								scales: {
-									yAxes: [{
-										ticks: {
-											beginAtZero: false
-										}
-									}]
-								}
-							}
-						})}`
-					)
-				}
-				);
 		} else if(command.startsWith("/candles")) {
 			const [_, product_id, hrs, gran] = command.split(" ");
 			const hours = hrs || 2;
@@ -140,9 +107,14 @@ export default class Bot {
 		}
 	}
 	private async screenshot(url: string): Promise<fs.ReadStream> {
-		console.log(url);
-		const filepath = `.tmp/${Date.now()}.png`;
-		const p = child_process.exec("chromium-browser " + ["--headless", "--hide-scrollbars", "--no-sandbox", "--disable-gpu", "--window-size=1600,900", `--screenshot=${filepath}`, `"${url}"`].join(" "));
+		const TMP_PATH = ".tmp";
+		const filepath = `${TMP_PATH}/${Date.now()}.png`;
+		if(!fs.existsSync(TMP_PATH)) {
+			fs.mkdirSync(TMP_PATH, { recursive: true });
+		}
+		const p = child_process.exec(`chromium-browser ` + ["--headless", "--hide-scrollbars", "--no-sandbox", "--disable-gpu", "--window-size=1600,900", `--screenshot=${filepath}`, `"${url}"`].join(" "));
+		p.stderr?.on("data", d => console.error(d.toString()));
+		p.stdout?.on("data", d => console.log(d.toString()));
 		return new Promise((resolve) => p.stdout?.on("end", () => {
 			// Optimistic resolve
 			resolve(fs.createReadStream(filepath))
