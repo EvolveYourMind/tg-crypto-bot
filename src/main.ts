@@ -32,7 +32,7 @@ app.get("/candles/:id", (req, res) => {
 			const Low = data.reduce((a, v) => a.low < v.low ? a : v).low
 			const Open = data[0].open;
 			const Close = data.slice(-1)[0].close;
-
+			console.log(data[0].time);
 			res.type('html').send(`
 				<html>
 					<head>
@@ -42,7 +42,14 @@ app.get("/candles/:id", (req, res) => {
 							google.charts.setOnLoadCallback(drawChart);
 							function drawChart() {
 								var data = google.visualization.arrayToDataTable(JSON.parse(\`${JSON.stringify(chartInfo)}\`), true);
-								var options = {	legend:'none'	};
+								var options = {
+									legend:'none',
+									candlestick: {
+										risingColor: {stroke: '#4CAF50', fill: 'white'},
+										fallingColor: {stroke: '#F44336', fill: '#F44336'},
+									},
+									hAxis: { textPosition: 'none' },
+								};
 								var chart = new google.visualization.CandlestickChart(document.getElementById('chart_div'));
 								chart.draw(data, options);
 							}
@@ -52,10 +59,26 @@ app.get("/candles/:id", (req, res) => {
 						<div style="position: absolute; width: 100%; z-index: 2">
 							<h3 style="text-align: center; margin-top: 40px;">${req.params.id.toUpperCase()}</h3>
 							<table style="margin-left: auto; margin-right: auto">
-								<tr><td>High:</td><td>${High.toFixed(4)}</td><td>Low:</td><td>${Low.toFixed(4)}</td></tr>
-								<tr><td>Close:</td><td>${Close.toFixed(4)}</td><td>Open:</td><td>${Open.toFixed(4)}</td></tr>
-								<tr><td>High/Low:</td><td>${(High / Low * 100 - 100).toFixed(4)}%</td></tr>
-								<tr><td>Close/Open:</td><td style="color: ${Close > Open ? "green" : "red"}">${(Close / Open * 100 - 100).toFixed(4)}%</td></tr>
+								<tr>
+									<td>High:</td><td>${High.toFixed(4)}</td>
+									<td>Close:</td><td>${Close.toFixed(4)}</td>
+								</tr>
+								<tr>
+									<td>Low:</td><td>${Low.toFixed(4)}</td>
+									<td>Open:</td><td>${Open.toFixed(4)}</td>
+								</tr>
+								<tr>
+									<td>High/Close:</td>
+									<td style="color: ${High > Close ? "green" : "red"}">${(High / Close * 100 - 100).toFixed(4)}%</td>
+								</tr>
+								<tr>
+									<td>Close/Open:</td>
+									<td style="color: ${Close > Open ? "green" : "red"}">${(Close / Open * 100 - 100).toFixed(4)}%</td>
+								</tr>
+								<tr>
+									<td>Date</td>
+									<td>${new Date(data[0].time * 1000).toLocaleString()}</td>
+								</tr>
 							</table>
 						</div>
 						<div id="chart_div" style="width: 100vw; height: 100vh;"></div>

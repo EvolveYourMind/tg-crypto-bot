@@ -5,3 +5,4 @@ dist
 *.pem
 db.json
 log_db.json
+.tmp
