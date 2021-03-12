@@ -38,9 +38,9 @@ app.get("/candles/:id", (req, res) => {
 						<script type="text/javascript" src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 					</head>
 					<body style="width: 100vw; height: 100vh; margin: 0px; position: relative; font-family: arial">
-						<div style="position:absolute; z-index: 2; color:#fff; width: 100%">
-							<h3 style="text-align: center; margin-top: 40px;">${req.params.id.toUpperCase()}</h3>
-							<table style="color: #fff; margin-left: auto; margin-right: auto">
+						<div style="position:absolute; z-index: 2; width: 100%">
+							<h3 style="text-align: center; margin-top: 20px;">${req.params.id.toUpperCase()}</h3>
+							<table style="background-color: #e8e5e588; padding: 10px; border-radius: 10px; margin-left: auto; margin-right: auto">
 								<tr>
 									<td>High:</td><td>${High.toFixed(4)}</td>
 									<td>Close:</td><td>${Close.toFixed(4)}</td>
@@ -69,30 +69,15 @@ app.get("/candles/:id", (req, res) => {
 						var chart = LightweightCharts.createChart(document.getElementById("chart_div"), {
 							width: document.body.offsetWidth,
 							height: document.body.offsetHeight,
-							layout: {
-								backgroundColor: '#000000',
-								textColor: 'rgba(255, 255, 255, 0.9)',
-							},
-							grid: {
-								vertLines: {
-									color: 'rgba(197, 203, 206, 0.5)',
-								},
-								horzLines: {
-									color: 'rgba(197, 203, 206, 0.5)',
-								},
-							},
 							crosshair: {
 								mode: LightweightCharts.CrosshairMode.Normal,
-							},
-							rightPriceScale: {
-								borderColor: 'rgba(197, 203, 206, 0.8)',
 							},
 							timeScale: {
 								borderColor: 'rgba(197, 203, 206, 0.8)',
 								timeVisible: true,
+								fitContent: true
 							},
 						});
-						
 						var candleSeries = chart.addCandlestickSeries({
 							upColor: '#68BA42',
 							downColor: 'red',
@@ -103,6 +88,21 @@ app.get("/candles/:id", (req, res) => {
 						});
 						
 						candleSeries.setData(JSON.parse(\`${JSON.stringify(data)}\`));
+
+						chart.timeScale().fitContent()
+						var lineWidth = 1;
+						${[ 0.02,  0.015,  0.01,  0.005, 
+							 -0.02, -0.015, -0.01, -0.005
+							].map(x => `
+							 candleSeries.createPriceLine({
+								price: ${Close * (1 + x)},
+								color: '#ffe100',
+								lineWidth: lineWidth,
+								lineStyle: LightweightCharts.LineStyle.Solid,
+								axisLabelVisible: true,
+								title: '${(x>0 ? "+" : "") + (x*100).toFixed(1)}%',
+							});
+						`).join("\n")}
 						</script>
 				</html>
 				`);
