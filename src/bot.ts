@@ -112,7 +112,7 @@ export default class Bot {
 		if(!fs.existsSync(TMP_PATH)) {
 			fs.mkdirSync(TMP_PATH, { recursive: true });
 		}
-		const p = child_process.exec(`chromium-browser ` + ["--headless", "--hide-scrollbars", "--no-sandbox", "--disable-gpu", "--window-size=800,600", `--screenshot=${filepath}`, `"${url}"`].join(" "));
+		const p = child_process.exec(`chromium-browser ` + ["--headless", "--hide-scrollbars", "--no-sandbox", "--disable-gpu", "--window-size=1600,1100", `--screenshot=${filepath}`, `"${url}"`].join(" "));
 		p.stderr?.on("data", d => console.error(d.toString()));
 		p.stdout?.on("data", d => console.log(d.toString()));
 		return new Promise((resolve) => p.stdout?.on("end", () => {
