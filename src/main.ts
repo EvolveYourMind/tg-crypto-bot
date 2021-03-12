@@ -51,7 +51,7 @@ app.get("/candles/:id", (req, res) => {
 								</tr>
 								<tr>
 									<td>High/Close:</td>
-									<td style="color: ${High > Close ? "#68BA42" : "#D86A45"}">${(High / Close * 100 - 100).toFixed(4)}%</td>
+									<td style="color: ${High < Close ? "#68BA42" : "#D86A45"}">${(High / Close * 100 - 100).toFixed(4)}%</td>
 								</tr>
 								<tr>
 									<td>Close/Open:</td>
