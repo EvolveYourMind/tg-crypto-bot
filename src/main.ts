@@ -85,22 +85,26 @@ app.get("/candles/:id", (req, res) => {
 							borderUpColor: '#68BA42',
 							wickDownColor: 'red',
 							wickUpColor: '#68BA42',
+							priceFormat: {
+								precision: ${Close > 100 ? 2 : 4},
+								minMove: ${Close > 100 ? 0.01 : 0.0001}
+							},
 						});
 						
 						candleSeries.setData(JSON.parse(\`${JSON.stringify(data)}\`));
 
 						chart.timeScale().fitContent()
 						var lineWidth = 1;
-						${[ 0.02,  0.015,  0.01,  0.005, 
-							 -0.02, -0.015, -0.01, -0.005
-							].map(x => `
+						${[0.02, 0.015, 0.01, 0.005,
+					-0.02, -0.015, -0.01, -0.005
+				].map(x => `
 							 candleSeries.createPriceLine({
 								price: ${Close * (1 + x)},
 								color: '#ffe100',
 								lineWidth: lineWidth,
 								lineStyle: LightweightCharts.LineStyle.Solid,
 								axisLabelVisible: true,
-								title: '${(x>0 ? "+" : "") + (x*100).toFixed(1)}%',
+								title: '${(x > 0 ? "+" : "") + (x * 100).toFixed(1)}%',
 							});
 						`).join("\n")}
 						</script>
