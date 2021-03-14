@@ -21,17 +21,18 @@ app.post("/", (req, res) => {
 
 app.get("/candles/:id", (req, res) => {
 	const product_id = req.params.id;
+	const interval = req.query.interval ?? "1m";
 	(isBinanceProduct(product_id)
 		? Binance.instance.candles({
 			product_id: req.params.id
-			, interval: req.params.interval as any
+			, interval: interval as any
 		})
 		: Coinbase.instance
 			.candles({
 				product_id: req.params.id
 				, start: moment().subtract(parseFloat(req.query.hours as string ?? "2"), "hours").toISOString()
 				, end: moment().toISOString()
-				, granularity: { "1m": 60 as const, "5m": 300 as const, "15m": 900 as const, "1h": 3600 as const, "6h": 21600 as const, "1d": 86400 as const }[req.query.interval as "1m" | "5m" | "15m" | "1h" | "6h" | "1d"]
+				, granularity: { "1m": 60 as const, "5m": 300 as const, "15m": 900 as const, "1h": 3600 as const, "6h": 21600 as const, "1d": 86400 as const }[interval as "1m" | "5m" | "15m" | "1h" | "6h" | "1d"]
 			}))
 		.then(async data => {
 			data.sort((a, b) => a.time - b.time);
@@ -39,7 +40,7 @@ app.get("/candles/:id", (req, res) => {
 			const Low = data.reduce((a, v) => a.low < v.low ? a : v).low
 			const Open = data[0].open;
 			const Close = data.slice(-1)[0].close;
-			console.log(data[0].time);
+
 			res.type('html').send(`
 				<html>
 					<head>

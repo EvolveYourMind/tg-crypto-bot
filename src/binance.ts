@@ -64,7 +64,10 @@ export default class Binance {
       }
       if("product_id" in parsed) {
         parent.priceSubs.get(parsed.product_id)?.(parseFloat(parsed.price));
+      } else if("s" in parsed) {
+        parent.priceSubs.get(parsed.s)?.(parseFloat(parsed.p));
       }
+
     });
   }
   public ticker(product_id: string): Promise<{
@@ -77,7 +80,7 @@ export default class Binance {
     product_id: string
     interval: "1m" | "3m" | "5m" | "15m" | "30m" | "1h" | "2h" | "4h" | "6h" | "8h" | "12h" | "1d" | "3d" | "1w" | "1M"
   }): Promise<{ time: number, low: number, high: number, open: number, close: number, volume: number }[]> {
-    return get(`/klines?symbol=${opts.product_id}&interval=${opts.interval}`)
+    return get(`/klines?symbol=${opts.product_id.toUpperCase()}&interval=${opts.interval}`)
       .then(res => res.json())
       .then(data => data.map(([time, open, high, low, close, volume]: [number, ...string[]]) => ({
         time: time

@@ -112,7 +112,7 @@ export default class Bot {
 		} else if(command.startsWith("/candles")) {
 			const [_, product_id, hrs, intrvl] = command.split(" ");
 			const hours = hrs || 2;
-			const interval = intrvl || "1m"
+			const interval = intrvl || "1m";
 			const url = `http://localhost:${config.PORT}/candles/${product_id}?hours=${hours}&interval=${interval}`;
 			this.screenshot(url)
 				.then(buf => telegram.sendPhoto(tgBody.message.chat.id, product_id, buf))
@@ -128,7 +128,7 @@ export default class Bot {
 		if(!fs.existsSync(TMP_PATH)) {
 			fs.mkdirSync(TMP_PATH, { recursive: true });
 		}
-		const p = child_process.exec(`chromium-browser ` + ["--headless", "--hide-scrollbars", "--no-sandbox", "--disable-gpu", "--window-size=1600,1100", `--screenshot=${filepath}`, `"${url}"`].join(" "));
+		const p = child_process.exec(`"/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome" ` + ["--headless", "--hide-scrollbars", "--no-sandbox", "--disable-gpu", "--window-size=1600,1100", `--screenshot=${filepath}`, `"${url}"`].join(" "));
 		p.stderr?.on("data", d => console.error(d.toString()));
 		p.stdout?.on("data", d => console.log(d.toString()));
 		return new Promise((resolve) => p.stdout?.on("end", () => {
