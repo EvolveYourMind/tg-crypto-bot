@@ -24,7 +24,7 @@ export default class Binance {
       "method": "SUBSCRIBE",
       "params":
         [
-          `${product_id}@trade`,
+          `${product_id.toLowerCase()}@trade`,
         ],
       "id": Date.now()
     }));
