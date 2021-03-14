@@ -2,10 +2,11 @@ import app, { setHostUrl } from "./express";
 import { setWebhook } from "./telegram";
 import ngrok from "ngrok";
 import config from "./config";
-import Bot from "./bot";
+import Bot, { isBinanceProduct } from "./bot";
 import Coinbase from "./coinbase";
 import moment from "moment";
 import { SaveToLog } from "./logger";
+import Binance from "./binance";
 
 const bot = new Bot();
 
@@ -19,12 +20,19 @@ app.post("/", (req, res) => {
 });
 
 app.get("/candles/:id", (req, res) => {
-	Coinbase.instance.candles({
-		product_id: req.params.id
-		, start: moment().subtract(parseFloat(req.query.hours as string ?? "2"), "hours").toISOString()
-		, end: moment().toISOString()
-		, granularity: parseInt(req.query.granularity as any ?? "60") as any
-	})
+	const product_id = req.params.id;
+	(isBinanceProduct(product_id)
+		? Binance.instance.candles({
+			product_id: req.params.id
+			, interval: req.params.interval as any
+		})
+		: Coinbase.instance
+			.candles({
+				product_id: req.params.id
+				, start: moment().subtract(parseFloat(req.query.hours as string ?? "2"), "hours").toISOString()
+				, end: moment().toISOString()
+				, granularity: { "1m": 60 as const, "5m": 300 as const, "15m": 900 as const, "1h": 3600 as const, "6h": 21600 as const, "1d": 86400 as const }[req.query.interval as "1m" | "5m" | "15m" | "1h" | "6h" | "1d"]
+			}))
 		.then(async data => {
 			data.sort((a, b) => a.time - b.time);
 			const High = data.reduce((a, v) => a.high > v.high ? a : v).high

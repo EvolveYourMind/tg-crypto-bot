@@ -6,6 +6,9 @@ import config from "./config";
 import crypto from "crypto";
 import * as child_process from "child_process"
 import * as fs from "fs";
+import Binance from "./binance";
+
+export const isBinanceProduct = (product_id: string) => product_id.includes("-");
 
 export default class Bot {
 	private lastPrices: Record<string, number>;
@@ -19,7 +22,11 @@ export default class Bot {
 	}
 
 	private subscribe(product_id: string) {
-		Coinbase.instance.subscribePrice(product_id, (price) => this.onPrice(product_id, price));
+		if(isBinanceProduct(product_id)) {
+			Binance.instance.subscribePrice(product_id, (price) => this.onPrice(product_id, price));
+		} else {
+			Coinbase.instance.subscribePrice(product_id, (price) => this.onPrice(product_id, price));
+		}
 	}
 
 	private subscribeTarget(chat_id: number, product_id: string, target: number, parent_id?: string) {
@@ -84,20 +91,30 @@ export default class Bot {
 			}
 		} else if(command.startsWith("/ticker")) {
 			const [_, product_id] = command.split(" ");
-			Coinbase.instance.ticker(product_id)
-				.then(res => telegram.sendMessage(
-					tgBody.message.chat.id
-					, `Last trade:\n${(["price", "size", "ask", "bid"] as (keyof typeof res)[]).map(k => `${k}: ${res[k]}`).join("\n")
-					}`
-				)
-				).catch(console.error);
+			if(isBinanceProduct(product_id)) {
+				Binance.instance.ticker(product_id)
+					.then(res => telegram.sendMessage(
+						tgBody.message.chat.id
+						, `Last trade:\n${(["symbol", "price"] as (keyof typeof res)[]).map(k => `${k}: ${res[k]}`).join("\n")
+						}`
+					)
+					).catch(console.error);
+			} else {
+				Coinbase.instance.ticker(product_id)
+					.then(res => telegram.sendMessage(
+						tgBody.message.chat.id
+						, `Last trade:\n${(["price", "size", "ask", "bid"] as (keyof typeof res)[]).map(k => `${k}: ${res[k]}`).join("\n")
+						}`
+					)
+					).catch(console.error);
+			}
 		} else if(command.startsWith("/ping")) {
 			telegram.sendMessage(tgBody.message.chat.id, "Pong 🏓");
 		} else if(command.startsWith("/candles")) {
-			const [_, product_id, hrs, gran] = command.split(" ");
+			const [_, product_id, hrs, intrvl] = command.split(" ");
 			const hours = hrs || 2;
-			const granularity = gran || 60
-			const url = `http://localhost:${config.PORT}/candles/${product_id}?hours=${hours}&granularity=${granularity}`;
+			const interval = intrvl || "1m"
+			const url = `http://localhost:${config.PORT}/candles/${product_id}?hours=${hours}&interval=${interval}`;
 			this.screenshot(url)
 				.then(buf => telegram.sendPhoto(tgBody.message.chat.id, product_id, buf))
 				.then(res => res.json())

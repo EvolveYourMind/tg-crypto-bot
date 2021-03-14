@@ -7,7 +7,8 @@ const config = {
 	, PORT: process.env.PORT || 80
 	, WEBHOOK_URL: process.env.WEBHOOK_URL || null
 	, NGROK_AUTH_TOKEN: process.env.NGROK_AUTH_TOKEN!
-	, SCREENSHOT_ENDPOINT: process.env.SCREENSHOT_ENDPOINT
+	,	BINANCE_API_KEY: process.env.BINANCE_API_KEY
+	,	BINANCE_SECRET_KEY: process.env.BINANCE_SECRET_KEY
 } 
 const undef = Object.entries(config).filter(([_, v]) => v === undefined);
 if(undef.length > 0) {
