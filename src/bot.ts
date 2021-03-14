@@ -84,7 +84,7 @@ export default class Bot {
 					, `Your subscriptions:\n\n${db.read()
 						.price_alert
 						.filter(x => x.chat_id === tgBody.message.chat.id)
-						.map(x => `${x.product_id}: ${x.target_price.toFixed(4)} ${this.makeUnsubCommand(x)}`)
+						.map(x => `${x.product_id}: ${(x.target_price??0).toFixed(4)} ${this.makeUnsubCommand(x)}`)
 						.join("\n")
 					}\nUnsubscribe all: /unsub_all`)
 			}

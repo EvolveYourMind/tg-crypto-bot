@@ -1,5 +1,5 @@
 # tg-crypto-bot
-A telegram bot for crypto prices monitoring based on the [coinbase API](https://docs.pro.coinbase.com)
+A telegram bot for crypto prices monitoring based on the [coinbase API](https://docs.pro.coinbase.com) and [binance API](https://binance-docs.github.io/apidocs/).
 
 Try it out here: [evobot](https://t.me/Evo_3000_bot)
 
@@ -39,12 +39,12 @@ Get a candles chart of the market for the last 2 hours with a granularity of 1 m
 /candles btc-eur
 ```
 
-Get candles chart with specific time range (eg. last 24 hours) and granularity (eg. 900 seconds = 15 minutes):
+Get candles chart with specific time range (eg. last 24 hours) and granularity of 1m:
 ```
-/candles btc-eur 24 900
+/candles eth-eur 24 15m
 ```
-The granularity can only be one of `{ 60, 300, 900, 3600, 21600, 86400 }`. \
-The maximum number of candles requested is limited to 300. \
+The granularity can only be one of `"1m" | "5m" | "15m" | "1h" | "6h" | "1d"`. \
+The maximum number of candles requested from coinbase is limited to 300. \
 The api request will fail for higher values.
 
-![example](example.jpg)
+![example](example.png)
