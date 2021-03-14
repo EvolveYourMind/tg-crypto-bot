@@ -11,10 +11,10 @@ export default class Binance {
   private initializing: Promise<any>;
 
   public subscribePrice(product_id: string, onPrice: (price: number) => void) {
-    const dcase = product_id.toLowerCase();
-    if(!this.priceSubs.has(dcase)) {
-      this.priceSubs.set(dcase, onPrice);
-      this.subscribe(dcase);
+    const upcase = product_id.toUpperCase();
+    if(!this.priceSubs.has(upcase)) {
+      this.priceSubs.set(upcase, onPrice);
+      this.subscribe(upcase);
     }
   }
   private async subscribe(product_id: string) {
