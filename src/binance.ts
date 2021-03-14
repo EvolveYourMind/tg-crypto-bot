@@ -71,7 +71,7 @@ export default class Binance {
     symbol: string
     price: string
   }> {
-    return get(`/ticker/price?symbol=${product_id}`).then(res => res.json());
+    return get(`/ticker/price?symbol=${product_id.toUpperCase()}`).then(res => res.json());
   }
   public candles(opts: {
     product_id: string
@@ -92,5 +92,5 @@ export default class Binance {
 }
 
 function get(endpoint: string) {
-  return fetch(`https://api.pro.binance.com/api/v3${endpoint}`, { method: "GET" });
+  return fetch(`https://api.binance.com/api/v3${endpoint}`, { method: "GET" });
 }

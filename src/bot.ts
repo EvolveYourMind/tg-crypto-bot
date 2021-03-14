@@ -1,4 +1,3 @@
-import moment from "moment";
 import Coinbase from "./coinbase";
 import db, { Database } from "./db";
 import telegram from "./telegram";
@@ -8,7 +7,7 @@ import * as child_process from "child_process"
 import * as fs from "fs";
 import Binance from "./binance";
 
-export const isBinanceProduct = (product_id: string) => product_id.includes("-");
+export const isBinanceProduct = (product_id: string) => !product_id.includes("-");
 
 export default class Bot {
 	private lastPrices: Record<string, number>;
