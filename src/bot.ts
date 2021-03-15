@@ -64,7 +64,7 @@ export default class Bot {
 					|| (lastPrice < e.target_price && e.target_price <= currentPrice))
 				.forEach(e => {
 					const prev = e.previous?.price ?? lastPrice;
-					telegram.sendMessage(e.chat_id, `${product_id.toUpperCase()}: ${prev} → ${currentPrice} ${currentPrice > prev ? "📈" : "📉"} ${((currentPrice / prev - 1) * 100).toFixed(2)}%`);
+					telegram.sendMessage(e.chat_id, `${product_id.toUpperCase()}: ${prev} → ${currentPrice} ${currentPrice > prev ? "📈" : "📉"}`);
 					this.unsubscribeTarget(e.id);
 					this.subscribeTarget({
 						chat_id: e.chat_id
