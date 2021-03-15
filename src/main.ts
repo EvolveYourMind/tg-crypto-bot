@@ -34,6 +34,7 @@ app.get("/candles/:id", (req, res) => {
 				, end: moment().toISOString()
 				, granularity: { "1m": 60 as const, "5m": 300 as const, "15m": 900 as const, "1h": 3600 as const, "6h": 21600 as const, "1d": 86400 as const }[interval as "1m" | "5m" | "15m" | "1h" | "6h" | "1d"]
 			}))
+		.then(data => isBinanceProduct(product_id) ? data.map(x => ({ ...x, time: x.time / 1000 })) : data)
 		.then(async data => {
 			data.sort((a, b) => a.time - b.time);
 			const High = data.reduce((a, v) => a.high > v.high ? a : v).high
@@ -65,10 +66,6 @@ app.get("/candles/:id", (req, res) => {
 								<tr>
 									<td>Close/Open:</td>
 									<td style="color: ${Close > Open ? "#68BA42" : "#D86A45"}">${(Close / Open * 100 - 100).toFixed(4)}%</td>
-								</tr>
-								<tr>
-									<td>Date</td>
-									<td>${new Date(data[0].time * 1000).toLocaleString()}</td>
 								</tr>
 							</table>
 						</div>
