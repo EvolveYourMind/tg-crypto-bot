@@ -6,6 +6,7 @@ import crypto from "crypto";
 import * as child_process from "child_process"
 import * as fs from "fs";
 import Binance from "./binance";
+import moment from "moment";
 
 export const isBinanceProduct = (product_id: string) => !product_id.includes("-");
 
@@ -28,11 +29,20 @@ export default class Bot {
 		}
 	}
 
-	private subscribeTarget(chat_id: number, product_id: string, target: number, parent_id?: string) {
+	private subscribeTarget(opts: {
+		chat_id: number
+		product_id: string
+		target: number
+		parent_id?: string
+		previous?: {
+			price: number
+			time: number
+		}
+	}) {
 		const id = crypto.randomBytes(4).toString("hex");
-		const entry = { id: id, product_id, chat_id: chat_id, target_price: target, parent_id };
+		const entry: Database["price_alert"][0] = { id: id, product_id: opts.product_id, chat_id: opts.chat_id, target_price: opts.target, parent_id: opts.parent_id, previous: opts.previous };
 		db.update(x => ({ ...x, price_alert: [...x.price_alert, entry] }));
-		this.subscribe(product_id);
+		this.subscribe(opts.product_id);
 		return entry;
 	}
 
@@ -53,10 +63,29 @@ export default class Bot {
 				.filter(e => (lastPrice > e.target_price && e.target_price >= currentPrice)
 					|| (lastPrice < e.target_price && e.target_price <= currentPrice))
 				.forEach(e => {
-					telegram.sendMessage(e.chat_id, `${product_id.toUpperCase()}: ${lastPrice} → ${currentPrice} ${currentPrice > lastPrice ? "📈" : "📉"}`);
+					const prev = e.previous?.price ?? lastPrice;
+					telegram.sendMessage(e.chat_id, `${product_id.toUpperCase()}: ${prev} → ${currentPrice} ${currentPrice > prev ? "📈" : "📉"} ${((currentPrice / prev - 1) * 100).toFixed(2)}%`);
 					this.unsubscribeTarget(e.id);
-					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 + 0.005), e.id);
-					this.subscribeTarget(e.chat_id, e.product_id, e.target_price * (1 - 0.005), e.id);
+					this.subscribeTarget({
+						chat_id: e.chat_id
+						, product_id: e.product_id
+						, target: e.target_price * (1 + 0.005)
+						, parent_id: e.id
+						, previous: {
+							price: currentPrice
+							, time: Date.now()
+						}
+					});
+					this.subscribeTarget({
+						chat_id: e.chat_id
+						, product_id: e.product_id
+						, target: e.target_price * (1 - 0.005)
+						, parent_id: e.id
+						, previous: {
+							price: currentPrice
+							, time: Date.now()
+						}
+					});
 				});
 		}
 		this.lastPrices[product_id] = currentPrice;
@@ -73,7 +102,7 @@ export default class Bot {
 			telegram.sendMessage(tgBody.message.chat.id, "OK.");
 		} else if(command.startsWith("/target")) {
 			const [_, product_id, target] = command.split(" ");
-			const entry = this.subscribeTarget(tgBody.message.chat.id, product_id, parseFloat(target));
+			const entry = this.subscribeTarget({ chat_id: tgBody.message.chat.id, product_id, target: parseFloat(target) });
 			telegram.sendMessage(tgBody.message.chat.id, `OK. ${this.makeUnsubCommand(entry)}`);
 		} else if(command.startsWith("/list")) {
 			if(db.read().price_alert.filter(x => x.chat_id === tgBody.message.chat.id).length === 0) {
@@ -84,7 +113,7 @@ export default class Bot {
 					, `Your subscriptions:\n\n${db.read()
 						.price_alert
 						.filter(x => x.chat_id === tgBody.message.chat.id)
-						.map(x => `${x.product_id}: ${(x.target_price??0).toFixed(4)} ${this.makeUnsubCommand(x)}`)
+						.map(x => `${x.product_id}: ${(x.target_price ?? 0).toFixed(4)} ${this.makeUnsubCommand(x)}`)
 						.join("\n")
 					}\nUnsubscribe all: /unsub_all`)
 			}
