@@ -9,6 +9,7 @@ export type Database = {
 		product_id: string
 		target_price: number
 		chat_id: number
+		move_perc?: number
 		previous?: {
 			price: number
 			time?: number

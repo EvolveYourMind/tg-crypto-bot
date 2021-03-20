@@ -34,13 +34,22 @@ export default class Bot {
 		product_id: string
 		target: number
 		parent_id?: string
+		move_perc?: number
 		previous?: {
 			price: number
 			time: number
 		}
 	}) {
 		const id = crypto.randomBytes(4).toString("hex");
-		const entry: Database["price_alert"][0] = { id: id, product_id: opts.product_id, chat_id: opts.chat_id, target_price: opts.target, parent_id: opts.parent_id, previous: opts.previous };
+		const entry: Database["price_alert"][0] = {
+			id: id
+			, product_id: opts.product_id
+			, chat_id: opts.chat_id
+			, target_price: opts.target
+			, parent_id: opts.parent_id
+			, previous: opts.previous
+			, move_perc: opts.move_perc
+		};
 		db.update(x => ({ ...x, price_alert: [...x.price_alert, entry] }));
 		this.subscribe(opts.product_id);
 		return entry;
@@ -66,10 +75,11 @@ export default class Bot {
 					const prev = e.previous?.price ?? lastPrice;
 					telegram.sendMessage(e.chat_id, `${currentPrice > prev ? "🟢" : "🔵"} ${product_id.toUpperCase()}: ${prev} → ${currentPrice} ${currentPrice > prev ? "📈" : "📉"} ${((currentPrice / prev - 1) * 100).toFixed(2)}%`);
 					this.unsubscribeTarget(e.id);
+					const move_perc = e.move_perc ?? 0.005;
 					this.subscribeTarget({
 						chat_id: e.chat_id
 						, product_id: e.product_id
-						, target: e.target_price * (1 + 0.005)
+						, target: e.target_price * (1 + move_perc)
 						, parent_id: e.id
 						, previous: {
 							price: currentPrice
@@ -79,7 +89,7 @@ export default class Bot {
 					this.subscribeTarget({
 						chat_id: e.chat_id
 						, product_id: e.product_id
-						, target: e.target_price * (1 - 0.005)
+						, target: e.target_price * (1 - move_perc)
 						, parent_id: e.id
 						, previous: {
 							price: currentPrice
@@ -101,8 +111,13 @@ export default class Bot {
 			}
 			telegram.sendMessage(tgBody.message.chat.id, "OK.");
 		} else if(command.startsWith("/target")) {
-			const [_, product_id, target] = command.split(" ");
-			const entry = this.subscribeTarget({ chat_id: tgBody.message.chat.id, product_id, target: parseFloat(target) });
+			const [_, product_id, target, move_perc] = command.split(" ");
+			const entry = this.subscribeTarget({
+				chat_id: tgBody.message.chat.id
+				, product_id
+				, target: parseFloat(target)
+				, move_perc: move_perc ? parseFloat(move_perc) : undefined
+			});
 			telegram.sendMessage(tgBody.message.chat.id, `OK. ${this.makeUnsubCommand(entry)}`);
 		} else if(command.startsWith("/list")) {
 			if(db.read().price_alert.filter(x => x.chat_id === tgBody.message.chat.id).length === 0) {
