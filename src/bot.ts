@@ -81,6 +81,7 @@ export default class Bot {
 						, product_id: e.product_id
 						, target: e.target_price * (1 + move_perc)
 						, parent_id: e.id
+						, move_perc
 						, previous: {
 							price: currentPrice
 							, time: Date.now()
@@ -91,6 +92,7 @@ export default class Bot {
 						, product_id: e.product_id
 						, target: e.target_price * (1 - move_perc)
 						, parent_id: e.id
+						, move_perc
 						, previous: {
 							price: currentPrice
 							, time: Date.now()
