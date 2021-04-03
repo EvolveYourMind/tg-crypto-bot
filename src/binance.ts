@@ -45,10 +45,13 @@ export default class Binance {
       resolveInitializing({});
       console.log("Connection with binance enstablished successfully");
     });
+    const that = this;
     this.ws.on("close", () => {
-      console.log("Coinbase websocket got closed");
-      this.init();
-      [...this.priceSubs.keys()].forEach(k => this.subscribe(k));
+      console.log("Binance websocket got closed... Reconnecting");
+      setTimeout(() => {
+        that.init();
+        [...that.priceSubs.keys()].forEach(k => that.subscribe(k));
+      }, 1000);
     });
     this.listen();
   }
