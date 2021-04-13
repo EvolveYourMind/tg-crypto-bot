@@ -1,14 +1,38 @@
 import WebSocket from "ws";
-import config from "./config";
-import crypto from "crypto";
 import fetch from "node-fetch";
 
-export default class Binance {
-  public static readonly instance = new Binance();
-
-  private ws: WebSocket;
+export class Queuer {
+  private queue: (() => Promise<void>)[] = [];
+  private running: boolean = false;
+  public run(f: () => Promise<void>) {
+    const that = this;
+    if(!that.running) {
+      that.running = true;
+      this.queue.push(f);
+      f().finally(async () => {
+        while(that.queue.length > 0) {
+          await that.queue.shift()?.();
+        }
+        that.running = false;
+      });
+    } else {
+      that.queue.push(f);
+    }
+  }
+  public destroy() {
+    this.queue = [];
+  }
+}
+class Binance {
+  private ws: WebSocket | null;
   private priceSubs: Map<string, (price: number) => void>;
-  private initializing: Promise<any>;
+  private lock: Queuer;
+  public constructor() {
+    this.ws = null;
+    this.lock = new Queuer();
+    this.priceSubs = new Map();
+    this.connect();
+  }
 
   public subscribePrice(product_id: string, onPrice: (price: number) => void) {
     const upcase = product_id.toUpperCase();
@@ -18,45 +42,51 @@ export default class Binance {
     }
   }
   private async subscribe(product_id: string) {
-    await this.initializing;
-    console.log("Subscribing for", product_id);
-    this.ws.send(JSON.stringify({
-      "method": "SUBSCRIBE",
-      "params":
-        [
-          `${product_id.toLowerCase()}@trade`,
-        ],
-      "id": Date.now()
+    this.lock.run(async () => {
+      try {
+        console.log("Subscribing for", product_id);
+        this.ws?.send(JSON.stringify({
+          "method": "SUBSCRIBE",
+          "params":
+            [
+              `${product_id.toLowerCase()}@trade`,
+            ],
+          "id": Date.now()
+        }));
+      } catch(err) {
+        console.error("Error while subscribing on binance for " + product_id, err);
+      }
+      await new Promise(r => setTimeout(r, 2000));
+    });
+  }
+
+
+  private connect() {
+    const that = this;
+    this.lock.run(() => new Promise(resolve => {
+      that.ws = new WebSocket("wss://stream.binance.com:9443/ws");
+      const interval = setInterval(() => that.ws?.pong(), 60000);
+      that.ws.on("open", () => {
+        console.log("Connection with binance enstablished successfully");
+        that.listen();
+        resolve();
+      });
+      that.ws.on("close", () => {
+        clearInterval(interval);
+        console.log("Binance websocket got closed... Reconnecting");
+        setTimeout(() => {
+          that.lock.destroy();
+          that.connect();
+          [...that.priceSubs.keys()].forEach(k => that.subscribe(k));
+        }, 1000);
+      });
     }));
-  }
-
-  private constructor() {
-    this.ws = new WebSocket("wss://stream.binance.com:9443/ws/stream")
-    this.initializing = new Promise(resolve => { });
-    this.priceSubs = new Map();
-    this.init();
-  }
-
-  private init() {
-    let resolveInitializing: (v: any) => void;
-    this.initializing = new Promise(r => resolveInitializing = r);
-    this.ws = new WebSocket("wss://stream.binance.com:9443/ws/stream")
-    this.ws.on("open", () => {
-      resolveInitializing({});
-      console.log("Connection with binance enstablished successfully");
-    });
-    this.ws.on("close", () => {
-      console.log("Coinbase websocket got closed");
-      this.init();
-      [...this.priceSubs.keys()].forEach(k => this.subscribe(k));
-    });
-    this.listen();
   }
 
   private listen() {
     const parent = this;
     let lastLog = Date.now();
-    this.ws.on("message", (data) => {
+    this.ws?.on("message", (data) => {
       const parsed = JSON.parse(data.toString());
       if(Date.now() > lastLog + 30000) {
         console.log("Got binance message.", parsed);
@@ -67,7 +97,6 @@ export default class Binance {
       } else if("s" in parsed) {
         parent.priceSubs.get(parsed.s)?.(parseFloat(parsed.p));
       }
-
     });
   }
   public ticker(product_id: string): Promise<{
@@ -97,3 +126,7 @@ export default class Binance {
 function get(endpoint: string) {
   return fetch(`https://api.binance.com/api/v3${endpoint}`, { method: "GET" });
 }
+
+export default {
+  instance: new Binance()
+};
