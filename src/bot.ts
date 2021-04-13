@@ -69,8 +69,11 @@ export default class Bot {
 		if(lastPrice !== undefined && lastPrice !== null) {
 			db.read()
 				.price_alert
-				.filter(e => (lastPrice > e.target_price && e.target_price >= currentPrice)
-					|| (lastPrice < e.target_price && e.target_price <= currentPrice))
+				.filter(e => e.product_id === product_id
+					&&
+					((lastPrice > e.target_price && e.target_price >= currentPrice)
+						|| (lastPrice < e.target_price && e.target_price <= currentPrice))
+				)
 				.forEach(e => {
 					const prev = e.previous?.price ?? lastPrice;
 					telegram.sendMessage(e.chat_id, `${currentPrice > prev ? "🟢" : "🔵"} ${product_id.toUpperCase()}: ${prev} → ${currentPrice} ${currentPrice > prev ? "📈" : "📉"} ${((currentPrice / prev - 1) * 100).toFixed(2)}%`);
