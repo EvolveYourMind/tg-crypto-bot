@@ -169,6 +169,41 @@ export default class Bot {
 				.then(console.log)
 				.catch(console.error);
 
+		} else if(command.startsWith("/help") || command.startsWith("/start")) {
+			telegram.sendMessage(tgBody.message.chat.id, `
+Available commands:
+
+Ping:
+/ping
+
+Get the last trade for btc-usdt pair: 
+/ticker btcusdt
+
+Subscribe to get a notification when a price surpasses a certain target. Once reached, two new targets will be created to +-0.5%:
+/target btc-eur 35000
+
+Change the moving target percentage to 1%:
+/target btc-eur 35000 0.01
+
+List active subscriptions:
+/list
+
+Unsubscribe from all subscriptions:
+/unsub_all
+
+Unsubscribe from a specific subscription (id: 1614845638872):
+/unsub_1614845638872
+
+Get a candles chart of the market for the last 2 hours with a granularity of 1 minute:
+/candles btc-eur
+
+Get candles chart with specific time range (eg. last 24 hours) and granularity of 1m:
+
+/candles eth-eur 24 15m
+The granularity can only be one of "1m" | "5m" | "15m" | "1h" | "6h" | "1d".
+The maximum number of candles requested from coinbase is limited to 300.
+The api request will fail for higher values.
+`)
 		}
 	}
 	private async screenshot(url: string): Promise<fs.ReadStream> {
