@@ -65,7 +65,11 @@ class Binance {
     const that = this;
     this.lock.run(() => new Promise(resolve => {
       that.ws = new WebSocket("wss://stream.binance.com:9443/ws");
-      const interval = setInterval(() => that.ws?.pong(), 60000);
+      const interval = setInterval(() => {
+        if(that.ws?.readyState === WebSocket.OPEN) {
+          that.ws?.pong();
+        }
+      }, 60000);
       that.ws.on("open", () => {
         console.log("Connection with binance enstablished successfully");
         that.listen();
